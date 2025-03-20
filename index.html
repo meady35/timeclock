@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Employee Clock In/Out</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0; /* Light background */
+        }
+        .form-container {
+            border: 1px solid #ccc;
+            padding: 20px;
+            width: 300px;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .form-container h2 {
+            margin-top: 0;
+        }
+        .form-container label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-container input[type="text"],
+        .form-container select {
+            width: calc(100% - 12px);
+            padding: 5px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            box-sizing: border-box;
+        }
+        .form-container button {
+            padding: 10px 15px;
+            background-color: #007bff; /* Blue button */
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<div class="form-container">
+    <h2>Clock In/Out</h2>
+    <form id="clockForm">
+        <label for="employeeNumber">Employee Number:</label>
+        <input type="text" id="employeeNumber" name="employeeNumber" required>
+
+        <label for="clockAction">Action:</label>
+        <select id="clockAction" name="clockAction">
+            <option value="in">Clock In</option>
+            <option value="out">Clock Out</option>
+        </select>
+
+        <button type="button" onclick="submitClockForm()">Submit</button>
+    </form>
+</div>
+
+<script>
+    function submitClockForm() {
+        const form = document.getElementById('clockForm');
+        const formData = new FormData(form);
+        const jsonData = {};
+
+        formData.forEach((value, key) => {
+            jsonData[key] = value;
+        });
+
+        fetch('YOUR_WEBHOOK_URL_HERE', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(jsonData),
+        })
+        .then(response => {
+            if (response.ok) {
+                alert('Action submitted successfully!');
+                form.reset();
+            } else {
+                alert('Action submission failed.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred during action submission.');
+        });
+    }
+</script>
+
+</body>
+</html>
