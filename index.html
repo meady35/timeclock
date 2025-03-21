@@ -64,6 +64,13 @@
         .form-container select {
             background-color: #333;
         }
+
+        #slot-display {
+            margin-top: 20px;
+            font-size: 1.5em;
+            text-align: center;
+            display: none;
+        }
     </style>
 </head>
 
@@ -81,14 +88,23 @@
             <select id="contactSubject" name="subject">
                 <option value="Clock In">Clock In</option>
                 <option value="Clock Out">Clock Out</option>
-                
             </select>
 
             <button type="button" onclick="submitForm('contactForm', 'https://hooks.us.webexconnect.io/events/399OMOC6AX')">Submit</button>
         </form>
     </div>
 
+    <div id="slot-display">
+        Phone Slot: <span id="slot-number"></span>
+    </div>
+
     <script>
+        let formSubmitted = false;
+        let employeeNumber = "";
+        const bearerToken = 'pat0mcXFndbbPM3px.4408df68ebc052b67ac3f37711bbd9c7bd9f0c0ce03a6b465dc33c19561593bb';
+        const slotEndpoint = 'https://api.airtable.com/v0/appgQhD733r8a4mBa/Employee?filterByFormula=Employee='empnumber'
+
+
         function submitForm(formId, webhookUrl) {
             const form = document.getElementById(formId);
             const formData = new FormData(form);
@@ -98,6 +114,7 @@
                 jsonData[key] = value;
             });
 
+            employeeNumber = jsonData.empnumber;
             fetch(webhookUrl, {
                 method: 'POST',
                 headers: {
@@ -109,6 +126,8 @@
                 if (response.ok) {
                     alert('Form submitted successfully!');
                     form.reset();
+                    formSubmitted = true;
+                    waitForSlot();
                 } else {
                     alert('Form submission failed.');
                 }
@@ -117,6 +136,43 @@
                 console.error('Error:', error);
                 alert('An error occurred during form submission.');
             });
+        }
+
+        function waitForSlot() {
+            if (!formSubmitted) {
+                return;
+            }
+
+            const checkSlot = () => {
+                fetch(`${slotEndpoint}?empnumber=${employeeNumber}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${bearerToken}`
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    } else {
+                        throw new Error('Failed to get slot number.');
+                    }
+                })
+                .then(data => {
+                    if (data && data.phoneSlot) { // Changed to data.phoneSlot
+                        document.getElementById('slot-number').textContent = data.phoneSlot; // Changed to data.phoneSlot
+                        document.getElementById('slot-display').style.display = 'block';
+                        formSubmitted = false;
+                    } else {
+                        setTimeout(checkSlot, 2000);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    setTimeout(checkSlot, 2000);
+                });
+            };
+
+            checkSlot();
         }
     </script>
 
